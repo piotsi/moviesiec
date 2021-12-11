@@ -19,12 +19,6 @@ type User struct {
 	ProfileDescription string  `json:"profileDescription"`
 }
 
-type UserOutput struct {
-	User
-	Ratings   []Rating `json:"ratings"`
-	WantToSee []Movie  `json:"wantToSee"`
-}
-
 type Rating struct {
 	Movie    Movie `json:"movie"`
 	User     User  `json:"user"`

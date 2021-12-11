@@ -22,6 +22,8 @@ type User interface {
 	UserGetByIDRatingsAll(w http.ResponseWriter, r *http.Request)
 }
 
+// UserGetAll queries all or one user by it's ID,
+// in query parameters paginate with 'page_size' and 'page', order by 'order_by', order asc or desc with 'order_in'
 func (h *Handler) UserGetAll(w http.ResponseWriter, r *http.Request) {
 	orderBy := r.URL.Query().Get("order_by")
 	orderIn := r.URL.Query().Get("order_in")
@@ -47,6 +49,7 @@ func (h *Handler) UserGetAll(w http.ResponseWriter, r *http.Request) {
 	w.Write(usersJSON)
 }
 
+// UserGetByID queries one user by it's ID
 func (h *Handler) UserGetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -67,6 +70,7 @@ func (h *Handler) UserGetByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(userJSON)
 }
 
+// UserGetByID queries one user ratings by it's ID
 func (h *Handler) UserGetByIDRatingsAll(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -99,6 +103,7 @@ func (h *Handler) UserGetByIDRatingsAll(w http.ResponseWriter, r *http.Request) 
 	w.Write(userRatingsJSON)
 }
 
+// UserAdd adds new user, unique nickname, accepts User struct
 func (h *Handler) UserAdd(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	user.ID = xid.New()
@@ -132,6 +137,7 @@ func (h *Handler) UserAdd(w http.ResponseWriter, r *http.Request) {
 	w.Write(userJSON)
 }
 
+// UserDelete deletes user with given id
 func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -145,6 +151,7 @@ func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	h.DB.Conn.Delete(&user)
 }
 
+// UserUpdate updates user with given id, accepts User struct
 func (h *Handler) UserUpdate(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -173,6 +180,7 @@ func (h *Handler) UserUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Write(userJSON)
 }
 
+// UserAuthenticate authenticates user, accepts User struct (only nickname and password required), returns Authenticate struct with success field
 func (h *Handler) UserAuthenticate(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	err := json.NewDecoder(r.Body).Decode(&user)

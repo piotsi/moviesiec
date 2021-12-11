@@ -21,6 +21,8 @@ type Movie interface {
 	MovieRate(w http.ResponseWriter, r *http.Request)
 }
 
+// MovieGetAll queries all or one movie by it's ID,
+// in query parameters paginate with 'page_size' and 'page', order by 'order_by', order asc or desc with 'order_in'
 func (h *Handler) MovieGetAll(w http.ResponseWriter, r *http.Request) {
 	orderBy := r.URL.Query().Get("order_by")
 	orderIn := r.URL.Query().Get("order_in")
@@ -46,6 +48,7 @@ func (h *Handler) MovieGetAll(w http.ResponseWriter, r *http.Request) {
 	w.Write(moviesJSON)
 }
 
+// MovieGetByID queries one movie by it's ID
 func (h *Handler) MovieGetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -66,6 +69,7 @@ func (h *Handler) MovieGetByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(movieJSON)
 }
 
+// MovieAdd adds new movie and accepts Movie struct
 func (h *Handler) MovieAdd(w http.ResponseWriter, r *http.Request) {
 	var movie model.Movie
 	movie.ID = xid.New()
@@ -87,6 +91,7 @@ func (h *Handler) MovieAdd(w http.ResponseWriter, r *http.Request) {
 	w.Write(movieJSON)
 }
 
+// MovieDelete deletes movie with given ID
 func (h *Handler) MovieDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -100,6 +105,8 @@ func (h *Handler) MovieDelete(w http.ResponseWriter, r *http.Request) {
 	h.DB.Conn.Delete(&movie)
 }
 
+// MovieRate changes movie's rating and ratingCount column
+// accepts Rating struct with embeded Movie and User structs which describe movie's ID to be rated by user with user's ID
 func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
 	var rating model.Rating
 	err := json.NewDecoder(r.Body).Decode(&rating)
@@ -192,6 +199,7 @@ func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
 	w.Write(ratingJSON)
 }
 
+// MovieUpdate updates movie with given id, accepts Movie struct
 func (h *Handler) MovieUpdate(w http.ResponseWriter, r *http.Request) {
 	var movie model.Movie
 	err := json.NewDecoder(r.Body).Decode(&movie)
