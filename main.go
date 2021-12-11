@@ -23,17 +23,17 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/", handler.Hello)
 
-		// r.Route("/users", func(r chi.Router) {
-		// 	r.Get("/", handler.UserGetAll)
-		// 	r.Get("/{id}", handler.UserGet)
-		// 	r.Post("/{id}", handler.UserAdd)
-		// 	r.Put("/{id}", handler.UserUpdate)
-		// 	r.Delete("/{id}", handler.UserDelete)
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/", handler.UserGetAll)
+			r.Get("/{id}", handler.UserGetByID)
+			r.Post("/", handler.UserAdd)
+			r.Put("/{id}", handler.UserUpdate)
+			r.Delete("/{id}", handler.UserDelete)
 
-		// 	r.Route("/login", func(r chi.Router) {
-		// 		r.Post("/", handler.UserAuthenticate)
-		// 	})
-		// })
+			r.Route("/login", func(r chi.Router) {
+				r.Post("/", handler.UserAuthenticate)
+			})
+		})
 
 		r.Route("/movies", func(r chi.Router) {
 			r.Get("/", handler.MovieGetAll)

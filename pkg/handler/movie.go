@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/piotsik/moviesiec-go/pkg/db"
@@ -19,8 +20,15 @@ type Movie interface {
 }
 
 func (h *Handler) MovieGetAll(w http.ResponseWriter, r *http.Request) {
+	orderBy := r.URL.Query().Get("order_by")
+	orderIn := r.URL.Query().Get("order_in")
+	var order string
+	if orderBy != "" && orderIn != "" {
+		order = strings.Join([]string{orderBy, orderIn}, " ")
+	}
+
 	movies := []model.Movie{}
-	result := h.DB.Conn.Scopes(db.Paginate(r)).Find(&movies)
+	result := h.DB.Conn.Scopes(db.Paginate(r)).Order(order).Find(&movies)
 	if result.Error == gorm.ErrRecordNotFound {
 		http.Error(w, result.Error.Error(), http.StatusNotFound)
 		return
