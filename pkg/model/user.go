@@ -11,8 +11,8 @@ type User struct {
 	Email              string  `json:"email"`
 	Created            string  `json:"created"`
 	Password           string  `json:"password"`
-	RatingsJSON        string  `json:"-"`
-	WantToSeeJSON      string  `json:"-"`
+	RatingsJSON        string  `json:"ratingsJSON"`
+	WantToSeeJSON      string  `json:"wantToSeeJSON"`
 	RatingsAverage     float64 `json:"ratingsAverage"`
 	RatingsCount       int     `json:"ratingsCount"`
 	ProfilePictureURL  string  `json:"profilePictureURL"`
@@ -27,6 +27,7 @@ type UserOutput struct {
 
 type Rating struct {
 	Movie    Movie `json:"movie"`
+	User     User  `json:"user"`
 	Rating   int   `json:"rating"`
 	Favorite bool  `json:"favorite"`
 }

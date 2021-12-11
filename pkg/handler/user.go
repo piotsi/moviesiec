@@ -19,6 +19,7 @@ type User interface {
 	UserDelete(w http.ResponseWriter, r *http.Request)
 	UserGetByID(w http.ResponseWriter, r *http.Request)
 	UserAuthenticate(w http.ResponseWriter, r *http.Request)
+	UserGetByIDRatingsAll(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Handler) UserGetAll(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,38 @@ func (h *Handler) UserGetByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(userJSON)
+}
+
+func (h *Handler) UserGetByIDRatingsAll(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	user := model.User{}
+	result := h.DB.Conn.First(&user, "id = ?", id)
+	if result.Error == gorm.ErrRecordNotFound {
+		http.Error(w, result.Error.Error(), http.StatusNotFound)
+		return
+	}
+
+	if user.RatingsJSON == "" {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	userRatings := []model.Rating{}
+	err := json.Unmarshal([]byte(user.RatingsJSON), &userRatings)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userRatingsJSON, err := json.Marshal(userRatings)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(userRatingsJSON)
 }
 
 func (h *Handler) UserAdd(w http.ResponseWriter, r *http.Request) {

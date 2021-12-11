@@ -17,6 +17,8 @@ type Movie interface {
 	MovieGetByUUID(w http.ResponseWriter, r *http.Request)
 	MovieAdd(w http.ResponseWriter, r *http.Request)
 	MovieDelete(w http.ResponseWriter, r *http.Request)
+	MovieUpdate(w http.ResponseWriter, r *http.Request)
+	MovieRate(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Handler) MovieGetAll(w http.ResponseWriter, r *http.Request) {
@@ -96,4 +98,118 @@ func (h *Handler) MovieDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.DB.Conn.Delete(&movie)
+}
+
+func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
+	var rating model.Rating
+	err := json.NewDecoder(r.Body).Decode(&rating)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	movie := model.Movie{}
+	movieResult := h.DB.Conn.First(&movie, "id = ?", rating.Movie.ID)
+	if movieResult.Error == gorm.ErrRecordNotFound {
+		http.Error(w, movieResult.Error.Error(), http.StatusNotFound)
+		return
+	}
+
+	user := model.User{}
+	userResult := h.DB.Conn.First(&user, "id = ?", rating.User.ID)
+	if userResult.Error == gorm.ErrRecordNotFound {
+		http.Error(w, userResult.Error.Error(), http.StatusNotFound)
+		return
+	}
+
+	userRatings := []model.Rating{}
+	if user.RatingsJSON != "" {
+		err = json.Unmarshal([]byte(user.RatingsJSON), &userRatings)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if rating.Rating < 0 || rating.Rating > 10 {
+		http.Error(w, "invalid rating, must be between 0 and 10", http.StatusForbidden)
+		return
+	}
+
+	ratingCount := 0
+	for i, ur := range userRatings {
+		if ur.Movie.ID == rating.Movie.ID {
+			if rating.Rating == 0 {
+				userRatings = append(userRatings[:i], userRatings[i+1:]...)
+				ratingCount = -1
+				rating.Rating = -ur.Rating
+			} else {
+				http.Error(w, "OK", http.StatusOK)
+				return
+			}
+		}
+	}
+	if rating.Rating > 0 {
+		ratingCount = 1
+		userRatings = append(userRatings, rating)
+	}
+
+	movie.Rating = ((movie.Rating * float64(movie.RatingCount)) + float64(rating.Rating)) / (float64(movie.RatingCount + ratingCount))
+	movie.RatingCount += ratingCount
+
+	userRatingsString, err := json.Marshal(userRatings)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user.RatingsJSON = string(userRatingsString)
+
+	err = h.DB.Conn.Transaction(func(tx *gorm.DB) error {
+		movieUpdateTX := h.DB.Conn.Model(&model.Movie{}).Select("*").Where("id = ?", rating.Movie.ID).UpdateColumns(movie)
+		if movieUpdateTX.Error != nil {
+			return movieUpdateTX.Error
+		}
+
+		userUpdateTX := h.DB.Conn.Model(&model.User{}).Select("*").Where("id = ?", user.ID).UpdateColumns(user)
+		if userUpdateTX.Error != nil {
+			return userUpdateTX.Error
+		}
+
+		return nil
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	ratingJSON, err := json.Marshal(rating)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(ratingJSON)
+}
+
+func (h *Handler) MovieUpdate(w http.ResponseWriter, r *http.Request) {
+	var movie model.Movie
+	err := json.NewDecoder(r.Body).Decode(&movie)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+
+	h.DB.Conn.Model(&model.Movie{}).Select("*").Omit("id").Where("id = ?", id).UpdateColumns(movie)
+
+	movieJSON, err := json.Marshal(movie)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(movieJSON)
 }

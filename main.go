@@ -29,6 +29,7 @@ func main() {
 			r.Post("/", handler.UserAdd)
 			r.Put("/{id}", handler.UserUpdate)
 			r.Delete("/{id}", handler.UserDelete)
+			r.Get("/{id}/ratings", handler.UserGetByIDRatingsAll)
 
 			r.Route("/login", func(r chi.Router) {
 				r.Post("/", handler.UserAuthenticate)
@@ -40,6 +41,10 @@ func main() {
 			r.Get("/{id}", handler.MovieGetByID)
 			r.Post("/", handler.MovieAdd)
 			r.Delete("/{id}", handler.MovieDelete)
+
+			r.Route("/rate", func(r chi.Router) {
+				r.Post("/", handler.MovieRate)
+			})
 		})
 	})
 
