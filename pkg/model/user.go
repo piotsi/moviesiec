@@ -8,6 +8,7 @@ type User struct {
 	ID                 xid.ID  `json:"id"`
 	Name               string  `json:"name"`
 	Nickname           string  `json:"nickname"`
+	IsAdmin            bool    `json:"isAdmin"`
 	Email              string  `json:"email"`
 	Created            string  `json:"created"`
 	Password           string  `json:"password"`
@@ -20,10 +21,10 @@ type User struct {
 }
 
 type Rating struct {
-	Movie    Movie `json:"movie"`
-	User     User  `json:"user"`
-	Rating   int   `json:"rating"`
-	Favorite bool  `json:"favorite"`
+	MovieID  string `json:"movieID"`
+	UserID   string `json:"userID"`
+	Rating   int    `json:"rating"`
+	Favorite bool   `json:"favorite"`
 }
 
 type Authentication struct {

@@ -106,7 +106,7 @@ func (h *Handler) MovieDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 // MovieRate changes movie's rating and ratingCount column
-// accepts Rating struct with embeded Movie and User structs which describe movie's ID to be rated by user with user's ID
+// accepts Rating struct
 func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
 	var rating model.Rating
 	err := json.NewDecoder(r.Body).Decode(&rating)
@@ -116,14 +116,14 @@ func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	movie := model.Movie{}
-	movieResult := h.DB.Conn.First(&movie, "id = ?", rating.Movie.ID)
+	movieResult := h.DB.Conn.First(&movie, "id = ?", rating.MovieID)
 	if movieResult.Error == gorm.ErrRecordNotFound {
 		http.Error(w, movieResult.Error.Error(), http.StatusNotFound)
 		return
 	}
 
 	user := model.User{}
-	userResult := h.DB.Conn.First(&user, "id = ?", rating.User.ID)
+	userResult := h.DB.Conn.First(&user, "id = ?", rating.UserID)
 	if userResult.Error == gorm.ErrRecordNotFound {
 		http.Error(w, userResult.Error.Error(), http.StatusNotFound)
 		return
@@ -144,24 +144,25 @@ func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ratingCount := 0
+	ratingRating := rating.Rating
 	for i, ur := range userRatings {
-		if ur.Movie.ID == rating.Movie.ID {
-			if rating.Rating == 0 {
+		if ur.MovieID == rating.MovieID {
+			if ratingRating == 0 {
 				userRatings = append(userRatings[:i], userRatings[i+1:]...)
 				ratingCount = -1
-				rating.Rating = -ur.Rating
+				ratingRating = -ur.Rating
 			} else {
 				http.Error(w, "OK", http.StatusOK)
 				return
 			}
 		}
 	}
-	if rating.Rating > 0 {
+	if ratingRating > 0 {
 		ratingCount = 1
 		userRatings = append(userRatings, rating)
 	}
 
-	movie.Rating = ((movie.Rating * float64(movie.RatingCount)) + float64(rating.Rating)) / (float64(movie.RatingCount + ratingCount))
+	movie.Rating = ((movie.Rating * float64(movie.RatingCount)) + float64(ratingRating)) / (float64(movie.RatingCount + ratingCount))
 	movie.RatingCount += ratingCount
 
 	userRatingsString, err := json.Marshal(userRatings)
@@ -172,7 +173,7 @@ func (h *Handler) MovieRate(w http.ResponseWriter, r *http.Request) {
 	user.RatingsJSON = string(userRatingsString)
 
 	err = h.DB.Conn.Transaction(func(tx *gorm.DB) error {
-		movieUpdateTX := h.DB.Conn.Model(&model.Movie{}).Select("*").Where("id = ?", rating.Movie.ID).UpdateColumns(movie)
+		movieUpdateTX := h.DB.Conn.Model(&model.Movie{}).Select("*").Where("id = ?", rating.MovieID).UpdateColumns(movie)
 		if movieUpdateTX.Error != nil {
 			return movieUpdateTX.Error
 		}
