@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/cors v1.2.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/rs/xid v1.3.0
