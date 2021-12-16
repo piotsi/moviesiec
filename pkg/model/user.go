@@ -28,6 +28,6 @@ type Rating struct {
 }
 
 type Authentication struct {
-	Success  bool   `json:"success"`
-	Nickname string `json:"nickname"`
+	Success bool   `json:"success"`
+	UserID  string `json:"userId"`
 }

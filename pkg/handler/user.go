@@ -197,8 +197,8 @@ func (h *Handler) UserAuthenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authenticated := model.Authentication{
-		Success:  hash.CheckPassword(user.Password, userCompare.Password),
-		Nickname: user.Nickname,
+		Success: hash.CheckPassword(user.Password, userCompare.Password),
+		UserID:  userCompare.ID.String(),
 	}
 	authenticatedJSON, err := json.Marshal(authenticated)
 	if err != nil {
