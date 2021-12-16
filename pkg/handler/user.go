@@ -196,7 +196,10 @@ func (h *Handler) UserAuthenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authenticated := model.Authentication{Success: hash.CheckPassword(user.Password, userCompare.Password)}
+	authenticated := model.Authentication{
+		Success:  hash.CheckPassword(user.Password, userCompare.Password),
+		Nickname: user.Nickname,
+	}
 	authenticatedJSON, err := json.Marshal(authenticated)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
