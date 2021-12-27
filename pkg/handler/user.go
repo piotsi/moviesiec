@@ -160,15 +160,18 @@ func (h *Handler) UserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.Password, err = hash.Password(user.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	id := chi.URLParam(r, "id")
 
-	h.DB.Conn.Model(user).Select("*").Omit("id").Where("id = ?", id).UpdateColumns(user)
+	if user.Password == "" {
+		h.DB.Conn.Model(user).Select("*").Where("id = ?", id).Omit("id", "password").Updates(user)
+	} else {
+		user.Password, err = hash.Password(user.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		h.DB.Conn.Model(user).Select("*").Where("id = ?", id).Omit("id").Updates(user)
+	}
 
 	userJSON, err := json.Marshal(user)
 	if err != nil {
